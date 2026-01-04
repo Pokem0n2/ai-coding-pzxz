@@ -1,2 +1,2 @@
 # hello-git
-MY FIRST GIT
+## git is awesome
