@@ -1,0 +1,23 @@
+{
+  "name": "ai-coding-pzxz",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pokem0n2/ai-coding-pzxz.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Pokem0n2/ai-coding-pzxz/issues"
+  },
+  "homepage": "https://github.com/Pokem0n2/ai-coding-pzxz#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
