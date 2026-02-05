@@ -67,22 +67,40 @@
     </div>
     
     <script>
-        // 轮询检查房间是否已创建
-        function checkRoomStatus() {
-            // 这里可以通过WebSocket或API调用检查房间状态
-            // 暂时使用localStorage模拟
-            const roomCreated = localStorage.getItem('roomCreated');
-            if (roomCreated === 'true') {
-                // 房间已创建，跳转到room.html
-                window.location.href = 'room.html';
-            } else {
-                // 继续轮询
-                setTimeout(checkRoomStatus, 2000);
-            }
-        }
+        // 使用WebSocket连接服务器
+        const ws = new WebSocket('ws://localhost:3080');
         
-        // 开始轮询
-        checkRoomStatus();
+        // 连接成功
+        ws.onopen = function() {
+            console.log('WebSocket连接成功');
+        };
+        
+        // 接收消息
+        ws.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'roomCreated') {
+                    // 房间已创建，存储房间信息并跳转到room.html
+                    localStorage.setItem('roomCreated', 'true');
+                    localStorage.setItem('gameMode', data.room.mode);
+                    localStorage.setItem('playerCount', data.room.totalPlayers);
+                    window.location.href = 'room.html';
+                }
+            } catch (error) {
+                console.error('WebSocket消息处理错误:', error);
+            }
+        };
+        
+        // 连接关闭
+        ws.onclose = function() {
+            console.log('WebSocket连接关闭');
+        };
+        
+        // 连接错误
+        ws.onerror = function(error) {
+            console.error('WebSocket连接错误:', error);
+        };
     </script>
 </body>
 </html>

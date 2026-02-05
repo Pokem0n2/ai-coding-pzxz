@@ -143,7 +143,25 @@
         document.getElementById('confirmBtn').addEventListener('click', function() {
             const mode = modeSelect.value;
             const playerCount = playerCountSelect.value;
-            alert(`游戏模式：${mode === 'normal' ? '普通模式' : '里世界模式'}\n玩家数量：${playerCount}`);
+            
+            // 存储游戏配置到本地
+            localStorage.setItem('gameMode', mode);
+            localStorage.setItem('playerCount', playerCount);
+            localStorage.setItem('roomCreated', 'true');
+            
+            // 通过WebSocket通知服务器创建房间
+            const ws = new WebSocket('ws://localhost:3080');
+            ws.onopen = function() {
+                ws.send(JSON.stringify({
+                    type: 'createRoom',
+                    mode: mode,
+                    totalPlayers: playerCount
+                }));
+                ws.close();
+            };
+            
+            // 跳转到room.html
+            window.location.href = 'room.html';
         });
     </script>
 </body>

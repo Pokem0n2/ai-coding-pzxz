@@ -175,6 +175,60 @@
             headerLeft.textContent = '编号：待定';
         }
         
+        // WebSocket连接
+        const ws = new WebSocket('ws://localhost:3080');
+        
+        // 连接成功
+        ws.onopen = function() {
+            console.log('WebSocket连接成功');
+        };
+        
+        // 接收消息
+        ws.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'playerJoined') {
+                    if (identity === 'god') {
+                        // 上帝版本：更新玩家列表
+                        const players = data.room.players;
+                        joinedPlayers = data.room.joinedPlayers;
+                        
+                        // 更新右上角计数
+                        headerRight.textContent = `${joinedPlayers}/${playerCount}`;
+                        
+                        // 清空玩家列表
+                        playerList.innerHTML = '';
+                        
+                        // 添加玩家列表项
+                        players.forEach(player => {
+                            const playerItem = document.createElement('div');
+                            playerItem.className = 'player-item';
+                            playerItem.innerHTML = `<span class="status-indicator"></span>${player.id}，${player.nickname}，已加入`;
+                            playerList.appendChild(playerItem);
+                        });
+                    } else if (identity === 'player' && data.playerId) {
+                        // 玩家版本：更新玩家编号
+                        localStorage.setItem('playerNumber', data.playerId);
+                        headerLeft.textContent = `编号：${data.playerId}`;
+                        alert('加入成功！');
+                    }
+                }
+            } catch (error) {
+                console.error('WebSocket消息处理错误:', error);
+            }
+        };
+        
+        // 连接关闭
+        ws.onclose = function() {
+            console.log('WebSocket连接关闭');
+        };
+        
+        // 连接错误
+        ws.onerror = function(error) {
+            console.error('WebSocket连接错误:', error);
+        };
+        
         // 玩家加入按钮点击事件
         joinBtn.addEventListener('click', function() {
             const nickname = nicknameInput.value.trim();
@@ -182,52 +236,15 @@
                 // 存储玩家昵称
                 localStorage.setItem('nickname', nickname);
                 
-                // 分配玩家编号（这里暂时使用简单的方式，实际项目中应该通过服务器分配）
-                const playerNumber = playerId++;
-                localStorage.setItem('playerNumber', playerNumber);
-                
-                // 更新玩家页面的编号
-                headerLeft.textContent = `编号：${playerNumber}`;
-                
-                // 模拟玩家加入通知（实际项目中应该通过WebSocket通知上帝）
-                // 这里暂时使用localStorage模拟
-                const players = JSON.parse(localStorage.getItem('players') || '[]');
-                players.push({ id: playerNumber, nickname: nickname });
-                localStorage.setItem('players', JSON.stringify(players));
-                
-                // 更新上帝页面的玩家列表（实际项目中应该通过WebSocket实时更新）
-                alert('加入成功！');
+                // 通过WebSocket通知服务器加入房间
+                ws.send(JSON.stringify({
+                    type: 'joinRoom',
+                    nickname: nickname
+                }));
             } else {
                 alert('请输入昵称');
             }
         });
-        
-        // 上帝页面实时更新玩家列表（实际项目中应该通过WebSocket实时更新）
-        function updatePlayerList() {
-            if (identity === 'god') {
-                const players = JSON.parse(localStorage.getItem('players') || '[]');
-                joinedPlayers = players.length;
-                
-                // 更新右上角计数
-                headerRight.textContent = `${joinedPlayers}/${playerCount}`;
-                
-                // 清空玩家列表
-                playerList.innerHTML = '';
-                
-                // 添加玩家列表项
-                players.forEach(player => {
-                    const playerItem = document.createElement('div');
-                    playerItem.className = 'player-item';
-                    playerItem.innerHTML = `<span class="status-indicator"></span>${player.id}，${player.nickname}，已加入`;
-                    playerList.appendChild(playerItem);
-                });
-            }
-        }
-        
-        // 定时更新玩家列表（实际项目中应该通过WebSocket实时更新）
-        if (identity === 'god') {
-            setInterval(updatePlayerList, 1000);
-        }
     </script>
 </body>
 </html>
