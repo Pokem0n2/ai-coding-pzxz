@@ -81,6 +81,14 @@ wss.on('connection', (ws) => {
             });
           }
           break;
+          
+        case 'startGame':
+          // 开始游戏
+          // 广播开始游戏消息
+          broadcast({
+            type: 'startGame'
+          });
+          break;
       }
     } catch (error) {
       console.error('WebSocket消息处理错误:', error);

@@ -131,6 +131,7 @@
             <div class="player-list" id="playerList">
                 <!-- 玩家列表将通过JavaScript动态添加 -->
             </div>
+            <button id="startGameBtn" class="confirm-btn" style="margin-top: 20px;">开始游戏</button>
         </div>
     </div>
     
@@ -143,6 +144,7 @@
         const nicknameInput = document.getElementById('nicknameInput');
         const joinBtn = document.getElementById('joinBtn');
         const playerList = document.getElementById('playerList');
+        const startGameBtn = document.getElementById('startGameBtn');
         
         // 获取身份和游戏配置
         const identity = localStorage.getItem('identity');
@@ -213,6 +215,9 @@
                         headerLeft.textContent = `编号：${data.playerId}`;
                         alert('加入成功！');
                     }
+                } else if (data.type === 'startGame') {
+                    // 开始游戏，跳转到game.html
+                    window.location.href = 'game.html';
                 }
             } catch (error) {
                 console.error('WebSocket消息处理错误:', error);
@@ -245,6 +250,16 @@
                 alert('请输入昵称');
             }
         });
+        
+        // 开始游戏按钮点击事件（仅上帝可见）
+        if (identity === 'god') {
+            startGameBtn.addEventListener('click', function() {
+                // 通过WebSocket通知服务器开始游戏
+                ws.send(JSON.stringify({
+                    type: 'startGame'
+                }));
+            });
+        }
     </script>
 </body>
 </html>
