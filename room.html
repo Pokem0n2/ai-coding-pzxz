@@ -116,6 +116,9 @@
                     localStorage.setItem('playerNumber', data.playerId);
                     headerLeft.textContent = `编号：${data.playerId}`;
                     alert('加入成功！');
+                } else if (data.type === 'error') {
+                    // 显示错误消息
+                    alert(data.message);
                 } else if (data.type === 'startGame') {
                     // 开始游戏，跳转到game.html
                     window.location.href = 'game.html';

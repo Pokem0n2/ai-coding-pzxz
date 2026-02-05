@@ -58,27 +58,39 @@ wss.on('connection', (ws) => {
         case 'joinRoom':
           // 玩家加入房间
           if (room.created && room.joinedPlayers < room.totalPlayers) {
-            const playerId = room.players.length + 1;
-            const player = {
-              id: playerId,
-              nickname: data.nickname
-            };
+            // 检查昵称是否已存在
+            const nicknameExists = room.players.some(player => player.nickname === data.nickname);
             
-            room.players.push(player);
-            room.joinedPlayers++;
-            
-            // 发送玩家ID给当前玩家
-            ws.send(JSON.stringify({
-              type: 'playerJoined',
-              playerId: playerId
-            }));
-            
-            // 广播玩家加入消息
-            broadcast({
-              type: 'playerJoined',
-              player: player,
-              room: room
-            });
+            if (nicknameExists) {
+              // 昵称已存在，发送错误消息
+              ws.send(JSON.stringify({
+                type: 'error',
+                message: '昵称已存在，请使用其他昵称'
+              }));
+            } else {
+              // 昵称不存在，允许加入
+              const playerId = room.players.length + 1;
+              const player = {
+                id: playerId,
+                nickname: data.nickname
+              };
+              
+              room.players.push(player);
+              room.joinedPlayers++;
+              
+              // 发送玩家ID给当前玩家
+              ws.send(JSON.stringify({
+                type: 'playerJoined',
+                playerId: playerId
+              }));
+              
+              // 广播玩家加入消息
+              broadcast({
+                type: 'playerJoined',
+                player: player,
+                room: room
+              });
+            }
           }
           break;
           
