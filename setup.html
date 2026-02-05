@@ -145,6 +145,7 @@
             const playerCount = playerCountSelect.value;
             
             // 存储游戏配置到本地
+            localStorage.setItem('identity', 'god');
             localStorage.setItem('gameMode', mode);
             localStorage.setItem('playerCount', playerCount);
             localStorage.setItem('roomCreated', 'true');
