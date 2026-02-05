@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>桌游辅助 - 游戏房间</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .header-left {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .header-right {
+            font-size: 16px;
+            font-weight: bold;
+            color: #007AFF;
+        }
+        
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        /* 玩家样式 */
+        .player-section {
+            text-align: center;
+        }
+        
+        .nickname-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .confirm-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #007AFF;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .confirm-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        /* 上帝样式 */
+        .god-section {
+            margin-top: 20px;
+        }
+        
+        .player-list {
+            margin-top: 20px;
+        }
+        
+        .player-item {
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #34C759;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left" id="headerLeft"></div>
+            <div class="header-right" id="headerRight"></div>
+        </div>
+        
+        <h1>游戏房间</h1>
+        
+        <!-- 玩家版本 -->
+        <div id="playerSection" class="player-section">
+            <input type="text" id="nicknameInput" class="nickname-input" placeholder="请输入你的昵称">
+            <button id="joinBtn" class="confirm-btn">确认加入</button>
+        </div>
+        
+        <!-- 上帝版本 -->
+        <div id="godSection" class="god-section" style="display: none;">
+            <div class="player-list" id="playerList">
+                <!-- 玩家列表将通过JavaScript动态添加 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const headerLeft = document.getElementById('headerLeft');
+        const headerRight = document.getElementById('headerRight');
+        const playerSection = document.getElementById('playerSection');
+        const godSection = document.getElementById('godSection');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const joinBtn = document.getElementById('joinBtn');
+        const playerList = document.getElementById('playerList');
+        
+        // 获取身份和游戏配置
+        const identity = localStorage.getItem('identity');
+        const gameMode = localStorage.getItem('gameMode');
+        const playerCount = localStorage.getItem('playerCount');
+        
+        // 初始化玩家计数
+        let joinedPlayers = 0;
+        let playerId = 1;
+        
+        // 根据身份显示不同版本
+        if (identity === 'god') {
+            // 上帝版本
+            playerSection.style.display = 'none';
+            godSection.style.display = 'block';
+            
+            // 设置左上角模式
+            const modeText = gameMode === 'normal' ? '普通' : '里世界';
+            headerLeft.textContent = `模式：${modeText}`;
+            
+            // 设置右上角计数
+            headerRight.textContent = `0/${playerCount}`;
+            
+        } else if (identity === 'player') {
+            // 玩家版本
+            playerSection.style.display = 'block';
+            godSection.style.display = 'none';
+            
+            // 设置左上角编号
+            headerLeft.textContent = '编号：待定';
+        }
+        
+        // 玩家加入按钮点击事件
+        joinBtn.addEventListener('click', function() {
+            const nickname = nicknameInput.value.trim();
+            if (nickname) {
+                // 存储玩家昵称
+                localStorage.setItem('nickname', nickname);
+                
+                // 分配玩家编号（这里暂时使用简单的方式，实际项目中应该通过服务器分配）
+                const playerNumber = playerId++;
+                localStorage.setItem('playerNumber', playerNumber);
+                
+                // 更新玩家页面的编号
+                headerLeft.textContent = `编号：${playerNumber}`;
+                
+                // 模拟玩家加入通知（实际项目中应该通过WebSocket通知上帝）
+                // 这里暂时使用localStorage模拟
+                const players = JSON.parse(localStorage.getItem('players') || '[]');
+                players.push({ id: playerNumber, nickname: nickname });
+                localStorage.setItem('players', JSON.stringify(players));
+                
+                // 更新上帝页面的玩家列表（实际项目中应该通过WebSocket实时更新）
+                alert('加入成功！');
+            } else {
+                alert('请输入昵称');
+            }
+        });
+        
+        // 上帝页面实时更新玩家列表（实际项目中应该通过WebSocket实时更新）
+        function updatePlayerList() {
+            if (identity === 'god') {
+                const players = JSON.parse(localStorage.getItem('players') || '[]');
+                joinedPlayers = players.length;
+                
+                // 更新右上角计数
+                headerRight.textContent = `${joinedPlayers}/${playerCount}`;
+                
+                // 清空玩家列表
+                playerList.innerHTML = '';
+                
+                // 添加玩家列表项
+                players.forEach(player => {
+                    const playerItem = document.createElement('div');
+                    playerItem.className = 'player-item';
+                    playerItem.innerHTML = `<span class="status-indicator"></span>${player.id}，${player.nickname}，已加入`;
+                    playerList.appendChild(playerItem);
+                });
+            }
+        }
+        
+        // 定时更新玩家列表（实际项目中应该通过WebSocket实时更新）
+        if (identity === 'god') {
+            setInterval(updatePlayerList, 1000);
+        }
+    </script>
+</body>
+</html>
