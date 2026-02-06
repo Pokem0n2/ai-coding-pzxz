@@ -116,7 +116,6 @@
                         // 只有当消息包含playerId时（即当前玩家刚加入），才更新自己的编号
                         localStorage.setItem('playerNumber', data.playerId);
                         headerLeft.textContent = `编号：${data.playerId}`;
-                        alert('加入成功！');
                     }
                     // 忽略其他玩家加入的消息
                 } else if (data.type === 'error') {
