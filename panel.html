@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玩家面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .player-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .info-item {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .hand-cards {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .card-item {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .action-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .action-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>玩家面板</h1>
+        
+        <div class="player-info">
+            <div class="info-item" id="orderInfo">编号：1</div>
+            <div class="info-item" id="nicknameInfo">昵称：玩家1</div>
+            <div class="info-item" id="characterInfo">角色：领导</div>
+        </div>
+        
+        <div class="hand-cards">
+            <h3>手牌</h3>
+            <div id="cardList">
+                <!-- 手牌将通过WebSocket动态添加 -->
+            </div>
+        </div>
+        
+        <button class="action-btn">出牌</button>
+        <button class="action-btn">发言</button>
+        <button class="action-btn">投票</button>
+    </div>
+    
+    <script>
+        // 获取本地存储的玩家信息
+        const order = localStorage.getItem('playerNumber');
+        const nickname = localStorage.getItem('nickname');
+        
+        // 更新页面信息
+        document.getElementById('orderInfo').textContent = `编号：${order}`;
+        document.getElementById('nicknameInfo').textContent = `昵称：${nickname}`;
+        
+        // 连接WebSocket
+        const ws = new WebSocket('ws://localhost:3080');
+        
+        ws.onopen = function() {
+            console.log('WebSocket connected');
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'updateHand') {
+                // 更新手牌
+            } else if (data.type === 'updateStatus') {
+                // 更新状态
+            }
+        };
+        
+        ws.onclose = function() {
+            console.log('WebSocket disconnected');
+        };
+    </script>
+</body>
+</html>

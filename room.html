@@ -111,17 +111,20 @@
             try {
                 const data = JSON.parse(event.data);
                 
-                if (data.type === 'playerJoined' && data.playerId) {
-                    // 更新玩家编号
-                    localStorage.setItem('playerNumber', data.playerId);
-                    headerLeft.textContent = `编号：${data.playerId}`;
-                    alert('加入成功！');
+                if (data.type === 'playerJoined') {
+                    if (data.playerId) {
+                        // 只有当消息包含playerId时（即当前玩家刚加入），才更新自己的编号
+                        localStorage.setItem('playerNumber', data.playerId);
+                        headerLeft.textContent = `编号：${data.playerId}`;
+                        alert('加入成功！');
+                    }
+                    // 忽略其他玩家加入的消息
                 } else if (data.type === 'error') {
                     // 显示错误消息
                     alert(data.message);
                 } else if (data.type === 'startGame') {
-                    // 开始游戏，跳转到game.html
-                    window.location.href = 'game.html';
+                    // 开始游戏，跳转到char-pick.html
+                    window.location.href = 'char-pick.html';
                 }
             } catch (error) {
                 console.error('WebSocket消息处理错误:', error);

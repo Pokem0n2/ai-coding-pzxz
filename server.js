@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const http = require('http');
 const WebSocket = require('ws');
+const fs = require('fs');
 
 const app = express();
 const port = 3080;
@@ -15,13 +16,36 @@ const server = http.createServer(app);
 // 创建WebSocket服务器
 const wss = new WebSocket.Server({ server });
 
+// 读取角色数据
+let allCharacters = [];
+try {
+  const charsContent = fs.readFileSync(path.join(__dirname, 'chars.txt'), 'utf8');
+  const lines = charsContent.split('\n');
+  lines.forEach(line => {
+    if (line.trim()) {
+      const match = line.match(/'([^']+)':\s*'([^']+)'/);
+      if (match) {
+        allCharacters.push({
+          name: match[1],
+          skill: match[2]
+        });
+      }
+    }
+  });
+  console.log(`成功加载 ${allCharacters.length} 个角色`);
+} catch (error) {
+  console.error('读取角色文件错误:', error);
+}
+
 // 房间管理
 const room = {
   created: false,
   mode: 'normal',
   totalPlayers: 7,
   joinedPlayers: 0,
-  players: []
+  confirmedPlayers: 0,
+  players: [],
+  availableCharacters: [...allCharacters]
 };
 
 // WebSocket连接处理
@@ -46,7 +70,9 @@ wss.on('connection', (ws) => {
           room.mode = data.mode;
           room.totalPlayers = data.totalPlayers;
           room.joinedPlayers = 0;
+          room.confirmedPlayers = 0;
           room.players = [];
+          room.availableCharacters = [...allCharacters];
           
           // 广播房间创建消息
           broadcast({
@@ -72,7 +98,10 @@ wss.on('connection', (ws) => {
               const playerId = room.players.length + 1;
               const player = {
                 id: playerId,
-                nickname: data.nickname
+                nickname: data.nickname,
+                order: playerId,
+                character: null,
+                confirmed: false
               };
               
               room.players.push(player);
@@ -84,7 +113,7 @@ wss.on('connection', (ws) => {
                 playerId: playerId
               }));
               
-              // 广播玩家加入消息
+              // 广播玩家加入消息（不包含playerId，避免其他玩家更新自己的编号）
               broadcast({
                 type: 'playerJoined',
                 player: player,
@@ -95,10 +124,63 @@ wss.on('connection', (ws) => {
           break;
           
         case 'startGame':
-          // 开始游戏
-          // 广播开始游戏消息
+          // 开始游戏 - 跳转到角色选择页面
           broadcast({
             type: 'startGame'
+          });
+          break;
+          
+        case 'requestCharacters':
+          // 玩家请求分配角色
+          if (room.availableCharacters.length >= 2) {
+            // 随机选择两个不同的角色
+            const randomIndices = [];
+            while (randomIndices.length < 2) {
+              const index = Math.floor(Math.random() * room.availableCharacters.length);
+              if (!randomIndices.includes(index)) {
+                randomIndices.push(index);
+              }
+            }
+            
+            const assignedCharacters = randomIndices.map(index => room.availableCharacters[index]);
+            
+            // 从可用角色中移除这两个角色
+            room.availableCharacters = room.availableCharacters.filter((_, index) => !randomIndices.includes(index));
+            
+            // 发送分配的角色给玩家
+            ws.send(JSON.stringify({
+              type: 'assignCharacters',
+              characters: assignedCharacters
+            }));
+          } else {
+            // 角色不足
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: '角色不足，请联系上帝'
+            }));
+          }
+          break;
+          
+        case 'confirmCharacter':
+          // 玩家确认角色选择
+          const playerIndex = room.players.findIndex(p => p.order === data.order);
+          if (playerIndex !== -1) {
+            room.players[playerIndex].character = data.character;
+            room.players[playerIndex].confirmed = true;
+            room.confirmedPlayers++;
+            
+            // 广播玩家确认角色消息
+            broadcast({
+              type: 'playerConfirmed',
+              players: room.players.filter(p => p.confirmed)
+            });
+          }
+          break;
+          
+        case 'startDealing':
+          // 开始发牌
+          broadcast({
+            type: 'gameStarted'
           });
           break;
       }

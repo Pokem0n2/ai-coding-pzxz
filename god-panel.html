@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上帝面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .game-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .info-item {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        
+        .action-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>上帝面板</h1>
+        
+        <div class="game-info">
+            <div class="info-item" id="modeInfo">模式：普通</div>
+            <div class="info-item" id="playerCountInfo">玩家数量：6</div>
+        </div>
+        
+        <button class="action-btn">发牌</button>
+        <button class="action-btn">开始回合</button>
+        <button class="action-btn">结束回合</button>
+        <button class="action-btn">查看玩家状态</button>
+    </div>
+    
+    <script>
+        // 获取本地存储的游戏配置
+        const gameMode = localStorage.getItem('gameMode');
+        const playerCount = localStorage.getItem('playerCount');
+        
+        // 更新页面信息
+        document.getElementById('modeInfo').textContent = `模式：${gameMode === 'normal' ? '普通' : '里世界'}`;
+        document.getElementById('playerCountInfo').textContent = `玩家数量：${playerCount}`;
+        
+        // 连接WebSocket
+        const ws = new WebSocket('ws://localhost:3080');
+        
+        ws.onopen = function() {
+            console.log('WebSocket connected');
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            // 处理游戏事件
+        };
+        
+        ws.onclose = function() {
+            console.log('WebSocket disconnected');
+        };
+    </script>
+</body>
+</html>

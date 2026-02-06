@@ -1,0 +1,15 @@
+# Node.js dependencies
+node_modules/
+
+# IDE files
+.trae/
+
+# Environment variables
+.env
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp

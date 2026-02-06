@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色选择</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .order-info {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .skill-description {
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            min-height: 100px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .char-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .char-btn {
+            padding: 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .char-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .char-btn.selected {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        
+        .confirm-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .confirm-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .confirm-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="order-info" id="orderInfo">编号：1</div>
+        </div>
+        
+        <div class="skill-description" id="skillDescription">
+            请选择一个角色查看技能说明
+        </div>
+        
+        <div class="char-buttons">
+            <button class="char-btn" id="charBtn1">角色1</button>
+            <button class="char-btn" id="charBtn2">角色2</button>
+        </div>
+        
+        <button class="confirm-btn" id="confirmBtn" disabled>确认使用</button>
+    </div>
+    
+    <script>
+        // 获取本地存储的信息
+        const order = localStorage.getItem('playerNumber');
+        const nickname = localStorage.getItem('nickname');
+        
+        // 更新页面信息
+        document.getElementById('orderInfo').textContent = `编号：${order}`;
+        
+        let selectedCharacter = null;
+        let characters = [];
+        
+        // 连接WebSocket
+        const ws = new WebSocket('ws://localhost:3080');
+        
+        ws.onopen = function() {
+            console.log('WebSocket connected');
+            // 请求分配角色
+            ws.send(JSON.stringify({ type: 'requestCharacters', order: parseInt(order) }));
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'assignCharacters') {
+                characters = data.characters;
+                updateCharacterButtons(characters);
+            } else if (data.type === 'gameStarted') {
+                window.location.href = 'panel.html';
+            }
+        };
+        
+        ws.onclose = function() {
+            console.log('WebSocket disconnected');
+        };
+        
+        // 更新角色按钮
+        function updateCharacterButtons(chars) {
+            const btn1 = document.getElementById('charBtn1');
+            const btn2 = document.getElementById('charBtn2');
+            
+            btn1.textContent = chars[0].name;
+            btn2.textContent = chars[1].name;
+            
+            // 添加点击事件
+            btn1.addEventListener('click', function() {
+                selectCharacter(0);
+            });
+            
+            btn2.addEventListener('click', function() {
+                selectCharacter(1);
+            });
+        }
+        
+        // 选择角色
+        function selectCharacter(index) {
+            selectedCharacter = characters[index];
+            
+            // 更新技能说明
+            document.getElementById('skillDescription').textContent = selectedCharacter.skill;
+            
+            // 更新按钮状态
+            document.getElementById('charBtn1').className = 'char-btn';
+            document.getElementById('charBtn2').className = 'char-btn';
+            document.getElementById(`charBtn${index + 1}`).className = 'char-btn selected';
+            
+            // 启用确认按钮
+            document.getElementById('confirmBtn').disabled = false;
+        }
+        
+        // 确认使用按钮点击事件
+        document.getElementById('confirmBtn').addEventListener('click', function() {
+            if (selectedCharacter) {
+                ws.send(JSON.stringify({
+                    type: 'confirmCharacter',
+                    order: parseInt(order),
+                    nickname: nickname,
+                    character: selectedCharacter.name
+                }));
+                alert('角色选择成功！');
+            }
+        });
+    </script>
+</body>
+</html>
