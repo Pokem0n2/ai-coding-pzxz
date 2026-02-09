@@ -114,8 +114,17 @@
                 if (data.type === 'playerJoined') {
                     if (data.playerId) {
                         // 只有当消息包含playerId时（即当前玩家刚加入），才更新自己的编号
-                        localStorage.setItem('playerNumber', data.playerId);
+                        const playerInfo = {
+                            playerNumber: data.playerId.toString(),
+                            nickname: nicknameInput.value.trim()
+                        };
+                        // 使用会话存储（sessionStorage）而不是本地存储（localStorage），确保每个标签页的存储是独立的
+                        sessionStorage.setItem('playerInfo', JSON.stringify(playerInfo));
+                        sessionStorage.setItem('playerNumber', data.playerId.toString());
                         headerLeft.textContent = `编号：${data.playerId}`;
+                        console.log('玩家编号已设置为:', data.playerId);
+                        console.log('会话存储中的playerInfo:', sessionStorage.getItem('playerInfo'));
+                        console.log('会话存储中的playerNumber:', sessionStorage.getItem('playerNumber'));
                     }
                     // 忽略其他玩家加入的消息
                 } else if (data.type === 'error') {
@@ -123,7 +132,22 @@
                     alert(data.message);
                 } else if (data.type === 'startGame') {
                     // 开始游戏，跳转到char-pick.html
-                    window.location.href = 'char-pick.html';
+                    let playerNumber;
+                    const playerInfo = sessionStorage.getItem('playerInfo');
+                    if (playerInfo) {
+                        const parsedPlayerInfo = JSON.parse(playerInfo);
+                        playerNumber = parsedPlayerInfo.playerNumber;
+                    } else {
+                        playerNumber = sessionStorage.getItem('playerNumber');
+                    }
+                    console.log('开始游戏，跳转到char-pick.html');
+                    console.log('跳转到char-pick.html前的playerNumber:', playerNumber);
+                    if (playerNumber) {
+                        window.location.href = `char-pick.html?playerNumber=${playerNumber}`;
+                    } else {
+                        console.error('会话存储中没有玩家编号');
+                        window.location.href = 'char-pick.html';
+                    }
                 }
             } catch (error) {
                 console.error('WebSocket消息处理错误:', error);
@@ -144,8 +168,12 @@
         joinBtn.addEventListener('click', function() {
             const nickname = nicknameInput.value.trim();
             if (nickname) {
+                // 清除之前的玩家信息，确保获取新的唯一编号
+                sessionStorage.removeItem('playerInfo');
+                sessionStorage.removeItem('playerNumber');
                 // 存储玩家昵称
-                localStorage.setItem('nickname', nickname);
+                sessionStorage.setItem('nickname', nickname);
+                console.log('点击加入按钮，清除了之前的playerInfo和playerNumber，设置了nickname:', nickname);
                 
                 // 通过WebSocket通知服务器加入房间
                 ws.send(JSON.stringify({

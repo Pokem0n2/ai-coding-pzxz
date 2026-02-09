@@ -92,6 +92,7 @@
             <div class="info-item" id="orderInfo">编号：1</div>
             <div class="info-item" id="nicknameInfo">昵称：玩家1</div>
             <div class="info-item" id="characterInfo">角色：领导</div>
+            <div class="info-item" id="skillInfo">技能：领导力 - 可以指定一名玩家发言</div>
         </div>
         
         <div class="hand-cards">
@@ -107,13 +108,23 @@
     </div>
     
     <script>
-        // 获取本地存储的玩家信息
-        const order = localStorage.getItem('playerNumber');
-        const nickname = localStorage.getItem('nickname');
+        // 从URL参数中获取玩家信息
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        
+        // 从URL参数获取玩家信息
+        const playerNumber = getURLParameter('playerNumber');
+        const nickname = getURLParameter('nickname');
+        const character = getURLParameter('character');
+        const skill = getURLParameter('skill');
         
         // 更新页面信息
-        document.getElementById('orderInfo').textContent = `编号：${order}`;
+        document.getElementById('orderInfo').textContent = `编号：${playerNumber}`;
         document.getElementById('nicknameInfo').textContent = `昵称：${nickname}`;
+        document.getElementById('characterInfo').textContent = `角色：${character}`;
+        document.getElementById('skillInfo').textContent = `技能：${skill || '暂无技能信息'}`;
         
         // 连接WebSocket
         const ws = new WebSocket('ws://localhost:3080');

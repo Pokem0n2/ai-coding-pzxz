@@ -166,6 +166,7 @@ wss.on('connection', (ws) => {
           const playerIndex = room.players.findIndex(p => p.order === data.order);
           if (playerIndex !== -1) {
             room.players[playerIndex].character = data.character;
+            room.players[playerIndex].skill = data.skill;
             room.players[playerIndex].confirmed = true;
             room.confirmedPlayers++;
             
@@ -179,8 +180,23 @@ wss.on('connection', (ws) => {
           
         case 'startDealing':
           // 开始发牌
+          console.log('收到 startDealing 消息，准备为每个玩家分配手牌并广播消息');
+          // 为每个玩家分配手牌
+          room.players.forEach(player => {
+            player.handCards = 5; // 假设每个玩家初始有5张手牌
+          });
+          
+          // 广播开始发牌消息给所有玩家
+          console.log('广播 gameStarted 消息给所有玩家');
           broadcast({
-            type: 'gameStarted'
+            type: 'gameStarted',
+            players: room.players
+          });
+          
+          // 广播开始发牌消息给上帝，让他跳转到 god-panel.html
+          console.log('广播 startDealing 消息给所有客户端，让上帝跳转到 god-panel.html');
+          broadcast({
+            type: 'startDealing'
           });
           break;
       }

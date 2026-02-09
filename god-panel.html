@@ -60,6 +60,26 @@
         .action-btn:hover {
             background-color: #45a049;
         }
+        
+        .player-list {
+            margin-bottom: 20px;
+        }
+        
+        .player-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .player-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .player-info {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -69,6 +89,10 @@
         <div class="game-info">
             <div class="info-item" id="modeInfo">模式：普通</div>
             <div class="info-item" id="playerCountInfo">玩家数量：6</div>
+        </div>
+        
+        <div class="player-list" id="playerList">
+            <!-- 玩家信息将通过WebSocket动态添加 -->
         </div>
         
         <button class="action-btn">发牌</button>
@@ -95,12 +119,40 @@
         
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
-            // 处理游戏事件
+            
+            if (data.type === 'gameStarted') {
+                // 游戏开始，更新玩家列表
+                updatePlayerList(data.players);
+            }
         };
         
         ws.onclose = function() {
             console.log('WebSocket disconnected');
         };
+        
+        // 更新玩家列表
+        function updatePlayerList(players) {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            
+            // 按编号排序
+            players.sort((a, b) => a.order - b.order);
+            
+            players.forEach(player => {
+                const playerItem = document.createElement('div');
+                playerItem.className = 'player-item';
+                
+                playerItem.innerHTML = `
+                    <div class="player-info">编号：${player.order}</div>
+                    <div class="player-info">昵称：${player.nickname}</div>
+                    <div class="player-info">角色：${player.character}</div>
+                    <div class="player-info">技能：${player.skill || '暂无技能信息'}</div>
+                    <div class="player-info">手牌数量：${player.handCards || 0}</div>
+                `;
+                
+                playerList.appendChild(playerItem);
+            });
+        }
     </script>
 </body>
 </html>

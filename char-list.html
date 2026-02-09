@@ -118,7 +118,12 @@
                 updatePlayerList(data.players);
                 updateCount(data.players.length);
             } else if (data.type === 'startDealing') {
+                // 跳转到 god-panel.html 页面
+                console.log('收到 startDealing 消息，准备跳转到 god-panel.html 页面');
                 window.location.href = 'god-panel.html';
+            } else if (data.type === 'gameStarted') {
+                // 忽略 gameStarted 消息，因为上帝不需要跳转到 panel.html 页面
+                console.log('收到 gameStarted 消息，上帝不需要跳转到 panel.html 页面');
             }
         };
         
@@ -154,6 +159,7 @@
         
         // 开始发牌按钮点击事件
         document.getElementById('startGameBtn').addEventListener('click', function() {
+            console.log('点击开始发牌按钮，发送 startDealing 消息给服务器');
             ws.send(JSON.stringify({ type: 'startDealing' }));
         });
     </script>

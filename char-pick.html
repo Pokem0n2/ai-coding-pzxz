@@ -102,7 +102,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="order-info" id="orderInfo">编号：1</div>
+            <div class="order-info" id="orderInfo">编号：加载中...</div>
         </div>
         
         <div class="skill-description" id="skillDescription">
@@ -118,12 +118,27 @@
     </div>
     
     <script>
-        // 获取本地存储的信息
-        const order = localStorage.getItem('playerNumber');
-        const nickname = localStorage.getItem('nickname');
+        // 从URL参数中获取玩家编号
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        
+        // 只从URL参数获取玩家编号，确保每个玩家使用自己的编号
+        const urlPlayerNumber = getURLParameter('playerNumber');
+        let order = urlPlayerNumber;
+        
+        // 从会话存储（sessionStorage）获取玩家昵称，确保每个标签页的存储是独立的
+        const nickname = sessionStorage.getItem('nickname') || localStorage.getItem('nickname');
         
         // 更新页面信息
-        document.getElementById('orderInfo').textContent = `编号：${order}`;
+        if (order) {
+            document.getElementById('orderInfo').textContent = `编号：${order}`;
+            console.log('从URL参数获取的玩家编号:', order);
+        } else {
+            document.getElementById('orderInfo').textContent = '编号：未分配';
+            console.error('URL参数中没有玩家编号');
+        }
         
         let selectedCharacter = null;
         let characters = [];
@@ -134,7 +149,13 @@
         ws.onopen = function() {
             console.log('WebSocket connected');
             // 请求分配角色
-            ws.send(JSON.stringify({ type: 'requestCharacters', order: parseInt(order) }));
+            if (order) {
+                console.log('发送角色请求，玩家编号:', order);
+                ws.send(JSON.stringify({ type: 'requestCharacters', order: parseInt(order) }));
+            } else {
+                console.error('本地存储中没有玩家编号');
+                alert('本地存储中没有玩家编号，请重新加入游戏');
+            }
         };
         
         ws.onmessage = function(event) {
@@ -144,7 +165,8 @@
                 characters = data.characters;
                 updateCharacterButtons(characters);
             } else if (data.type === 'gameStarted') {
-                window.location.href = 'panel.html';
+                // 跳转到 panel.html 页面并传递玩家编号、昵称、角色和技能参数
+                window.location.href = `panel.html?playerNumber=${order}&nickname=${encodeURIComponent(nickname)}&character=${encodeURIComponent(selectedCharacter ? selectedCharacter.name : '')}&skill=${encodeURIComponent(selectedCharacter ? selectedCharacter.skill : '')}`;
             }
         };
         
@@ -193,9 +215,10 @@
                     type: 'confirmCharacter',
                     order: parseInt(order),
                     nickname: nickname,
-                    character: selectedCharacter.name
+                    character: selectedCharacter.name,
+                    skill: selectedCharacter.skill
                 }));
-                alert('角色选择成功！');
+                // 移除弹窗，直接确认选择
             }
         });
     </script>
