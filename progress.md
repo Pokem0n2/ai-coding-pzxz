@@ -169,6 +169,43 @@
 - 推送到远程git仓库
 - 确保node_modules文件夹被排除在版本控制之外
 
+## 2026-02-11 环境牌显示问题修复
+
+### 问题描述
+- 上帝点击"开始发牌"后，god-panel和panel页面的环境牌区域没有显示八张环境牌
+
+### 原因分析
+- 环境牌只在gameStarted消息中传递，而页面加载时请求的是roomStatus消息
+- roomStatus消息中不包含环境牌信息
+- 即使收到了gameStarted消息，页面刷新后环境牌信息会丢失
+
+### 解决方案
+
+#### 1. 修改server.js
+- 在room对象中添加environmentCards属性，用于存储环境牌信息
+- 在startDealing消息处理中，将生成的环境牌存储到room.environmentCards中
+- 在requestRoomStatus消息处理中，返回roomStatus消息时包含environmentCards信息
+
+#### 2. 修改god-panel.html
+- 在roomStatus消息处理中添加环境牌的处理逻辑
+- 确保当页面加载后请求房间状态时也能显示环境牌信息
+
+#### 3. 修改panel.html
+- 在roomStatus消息处理中添加环境牌的处理逻辑
+- 确保当页面加载后请求房间状态时也能显示环境牌信息
+
+### 功能测试
+- 启动服务器，验证环境牌生成逻辑
+- 测试环境牌在god-panel页面的显示
+- 测试环境牌在panel页面的显示
+- 测试页面刷新后环境牌信息是否仍然显示
+- 确认所有客户端收到相同的环境牌信息
+
+### 代码仓更新
+- 提交了所有修改到本地git仓库
+- 推送到远程git仓库
+- 确保node_modules文件夹被排除在版本控制之外
+
 ## 2026-02-10 环境牌功能实现
 
 ### 功能需求

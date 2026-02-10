@@ -170,10 +170,15 @@
                     updateEnvironmentCards(data.environmentCards);
                 }
             } else if (data.type === 'roomStatus') {
-                // 收到房间状态消息，更新玩家列表
+                // 收到房间状态消息，更新玩家列表和环境牌
                 console.log('收到roomStatus消息，玩家数量:', data.players ? data.players.length : 0);
                 if (data.players) {
                     updatePlayerList(data.players);
+                }
+                // 更新环境牌
+                if (data.environmentCards) {
+                    console.log('环境牌信息:', data.environmentCards);
+                    updateEnvironmentCards(data.environmentCards);
                 }
             } else if (data.type === 'startDealing') {
                 // 开始发牌，跳转到god-panel.html（如果还没跳转的话）

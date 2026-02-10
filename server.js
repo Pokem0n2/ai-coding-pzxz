@@ -108,7 +108,8 @@ const room = {
   joinedPlayers: 0,
   confirmedPlayers: 0,
   players: [],
-  availableCharacters: [...allCharacters]
+  availableCharacters: [...allCharacters],
+  environmentCards: []
 };
 
 // WebSocket连接处理
@@ -247,7 +248,8 @@ wss.on('connection', (ws) => {
           ws.send(JSON.stringify({
             type: 'roomStatus',
             room: room,
-            players: room.players
+            players: room.players,
+            environmentCards: room.environmentCards
           }));
           break;
           
@@ -340,6 +342,9 @@ wss.on('connection', (ws) => {
           // 打乱环境牌
           environmentCards = shuffleArray(environmentCards);
           console.log('打乱后的环境牌:', environmentCards);
+          
+          // 存储环境牌到房间状态中
+          room.environmentCards = environmentCards;
           
           // 广播开始发牌消息给所有玩家
           console.log('广播 gameStarted 消息给所有玩家');

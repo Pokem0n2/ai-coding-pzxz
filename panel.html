@@ -207,6 +207,11 @@
                         document.getElementById('roleInfo').textContent = `身份：${currentPlayer.role || '未知身份'}`;
                     }
                 }
+                // 更新环境牌
+                if (data.environmentCards) {
+                    console.log('环境牌信息:', data.environmentCards);
+                    updateEnvironmentCards(data.environmentCards);
+                }
             } else if (data.type === 'updateHand') {
                 // 更新手牌
             } else if (data.type === 'updateStatus') {
