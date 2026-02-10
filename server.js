@@ -298,11 +298,55 @@ wss.on('connection', (ws) => {
             console.log('分配默认身份后的玩家列表:', room.players);
           }
           
+          // 生成环境牌
+          console.log('开始生成环境牌');
+          
+          // 定义环境牌数组
+          const bigFartCards = ['臭屁', '闷屁', '蔫儿屁', '彩虹屁', '连环屁'];
+          const smallFartCards = ['有屁', '有屁', '有屁'];
+          const noFartCards = ['无屁', '无屁', '无屁', '无屁'];
+          
+          let environmentCards = [];
+          
+          // 根据模式和人数确定环境牌组合
+          if (room.mode === 'normal' && room.totalPlayers === 5) {
+            console.log('普通模式五人局：1张大屁 + 3张小屁 + 4张无屁');
+            // 随机抽取1张不重复的大屁牌
+            const selectedBigFartCards = [];
+            while (selectedBigFartCards.length < 1) {
+              const randomIndex = Math.floor(Math.random() * bigFartCards.length);
+              const card = bigFartCards[randomIndex];
+              if (!selectedBigFartCards.includes(card)) {
+                selectedBigFartCards.push(card);
+              }
+            }
+            // 组合环境牌
+            environmentCards = [...selectedBigFartCards, ...smallFartCards, ...noFartCards];
+          } else {
+            console.log('其他情况：2张大屁 + 2张小屁 + 4张无屁');
+            // 随机抽取2张不重复的大屁牌
+            const selectedBigFartCards = [];
+            while (selectedBigFartCards.length < 2) {
+              const randomIndex = Math.floor(Math.random() * bigFartCards.length);
+              const card = bigFartCards[randomIndex];
+              if (!selectedBigFartCards.includes(card)) {
+                selectedBigFartCards.push(card);
+              }
+            }
+            // 组合环境牌（小屁牌只取前2张）
+            environmentCards = [...selectedBigFartCards, ...smallFartCards.slice(0, 2), ...noFartCards];
+          }
+          
+          // 打乱环境牌
+          environmentCards = shuffleArray(environmentCards);
+          console.log('打乱后的环境牌:', environmentCards);
+          
           // 广播开始发牌消息给所有玩家
           console.log('广播 gameStarted 消息给所有玩家');
           broadcast({
             type: 'gameStarted',
-            players: room.players
+            players: room.players,
+            environmentCards: environmentCards
           });
           
           // 广播开始发牌消息给上帝，让他跳转到 god-panel.html
