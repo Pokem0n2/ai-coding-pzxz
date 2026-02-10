@@ -37,6 +37,69 @@ try {
   console.error('读取角色文件错误:', error);
 }
 
+// 读取身份数据
+let roleConfigs = {};
+try {
+  const rolesContent = fs.readFileSync(path.join(__dirname, 'roles.txt'), 'utf8');
+  const lines = rolesContent.split('\n');
+  let currentMode = '';
+  
+  // 模式映射
+  const modeMap = {
+    '普通模式': 'normal',
+    '里世界模式': 'inner'
+  };
+  
+  // 人数映射
+  const countMap = {
+    '五人局': 5,
+    '六人局': 6,
+    '七人局': 7,
+    '八人局': 8,
+    '九人局': 9,
+    '十人局': 10
+  };
+  
+  lines.forEach(line => {
+    line = line.trim();
+    if (line) {
+      // 检查是否是模式行
+      for (const [key, value] of Object.entries(modeMap)) {
+        if (line.includes(key)) {
+          currentMode = value;
+          roleConfigs[currentMode] = {};
+          break;
+        }
+      }
+      
+      // 检查是否是人数行
+      for (const [key, value] of Object.entries(countMap)) {
+        if (line.includes(key)) {
+          const match = line.match(/\[(.*?)\]/);
+          if (match && currentMode) {
+            const roles = match[1].split(',').map(role => role.trim());
+            roleConfigs[currentMode][value] = roles;
+          }
+          break;
+        }
+      }
+    }
+  });
+  console.log('成功加载身份配置:', roleConfigs);
+} catch (error) {
+  console.error('读取身份文件错误:', error);
+}
+
+// 随机打乱数组
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 // 房间管理
 const room = {
   created: false,
@@ -178,13 +241,62 @@ wss.on('connection', (ws) => {
           }
           break;
           
+        case 'requestRoomStatus':
+          // 上帝面板请求房间状态
+          console.log('收到 requestRoomStatus 消息，返回房间状态和玩家信息');
+          ws.send(JSON.stringify({
+            type: 'roomStatus',
+            room: room,
+            players: room.players
+          }));
+          break;
+          
         case 'startDealing':
           // 开始发牌
-          console.log('收到 startDealing 消息，准备为每个玩家分配手牌并广播消息');
-          // 为每个玩家分配手牌
-          room.players.forEach(player => {
-            player.handCards = 5; // 假设每个玩家初始有5张手牌
-          });
+          console.log('收到 startDealing 消息，准备为每个玩家分配手牌和身份并广播消息');
+          
+          // 分配身份
+          const totalPlayersStr = room.totalPlayers.toString();
+          console.log('开始分配身份，模式:', room.mode, '人数:', room.totalPlayers, '人数字符串:', totalPlayersStr);
+          console.log('角色配置是否存在:', !!roleConfigs[room.mode]);
+          if (roleConfigs[room.mode]) {
+            console.log('当前模式的身份配置:', roleConfigs[room.mode]);
+            console.log('对应人数的身份数组是否存在:', !!roleConfigs[room.mode][totalPlayersStr]);
+          }
+          
+          if (roleConfigs[room.mode] && roleConfigs[room.mode][totalPlayersStr]) {
+            // 获取对应模式和人数的身份数组
+            let rolesArray = roleConfigs[room.mode][totalPlayersStr];
+            console.log('原始身份数组:', rolesArray);
+            // 打乱身份数组
+            rolesArray = shuffleArray(rolesArray);
+            console.log('打乱后的身份数组:', rolesArray);
+            
+            // 为每个玩家分配身份
+            console.log('分配身份前的玩家列表:', room.players);
+            room.players.forEach((player, index) => {
+              if (index < rolesArray.length) {
+                player.role = rolesArray[index];
+                console.log('为玩家', player.order, player.nickname, '分配身份:', rolesArray[index]);
+              } else {
+                player.role = '未知身份';
+                console.log('为玩家', player.order, player.nickname, '分配默认身份: 未知身份');
+              }
+              player.handCards = 5; // 假设每个玩家初始有5张手牌
+            });
+            console.log('分配身份后的玩家列表:', room.players);
+          } else {
+            console.error('未找到对应模式和人数的身份配置:', room.mode, totalPlayersStr);
+            console.log('当前可用的身份配置:', roleConfigs);
+            // 为每个玩家分配默认身份
+            console.log('分配默认身份前的玩家列表:', room.players);
+            room.players.forEach(player => {
+              player.role = '乘客';
+              console.log('为玩家', player.order, player.nickname, '分配默认身份: 乘客');
+              player.handCards = 5; // 假设每个玩家初始有5张手牌
+            });
+            console.log('分配默认身份后的玩家列表:', room.players);
+          }
           
           // 广播开始发牌消息给所有玩家
           console.log('广播 gameStarted 消息给所有玩家');

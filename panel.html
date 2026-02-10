@@ -93,6 +93,7 @@
             <div class="info-item" id="nicknameInfo">昵称：玩家1</div>
             <div class="info-item" id="characterInfo">角色：领导</div>
             <div class="info-item" id="skillInfo">技能：领导力 - 可以指定一名玩家发言</div>
+            <div class="info-item" id="roleInfo">身份：乘客</div>
         </div>
         
         <div class="hand-cards">
@@ -131,12 +132,41 @@
         
         ws.onopen = function() {
             console.log('WebSocket connected');
+            // 页面加载后，主动请求房间状态，确保获取最新的玩家信息
+            console.log('发送requestRoomStatus消息');
+            ws.send(JSON.stringify({ type: 'requestRoomStatus' }));
         };
         
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
+            console.log('收到WebSocket消息:', data.type);
             
-            if (data.type === 'updateHand') {
+            if (data.type === 'gameStarted') {
+                console.log('收到gameStarted消息，玩家数量:', data.players.length);
+                console.log('当前玩家编号:', playerNumber);
+                // 找到当前玩家的信息
+                const currentPlayer = data.players.find(p => p.order === parseInt(playerNumber));
+                console.log('找到的当前玩家:', currentPlayer);
+                if (currentPlayer) {
+                    // 更新身份信息
+                    console.log('更新身份信息为:', currentPlayer.role);
+                    document.getElementById('roleInfo').textContent = `身份：${currentPlayer.role || '未知身份'}`;
+                } else {
+                    console.error('未找到当前玩家的信息');
+                }
+            } else if (data.type === 'roomStatus') {
+                console.log('收到roomStatus消息，玩家数量:', data.players ? data.players.length : 0);
+                if (data.players) {
+                    // 找到当前玩家的信息
+                    const currentPlayer = data.players.find(p => p.order === parseInt(playerNumber));
+                    console.log('找到的当前玩家:', currentPlayer);
+                    if (currentPlayer) {
+                        // 更新身份信息
+                        console.log('更新身份信息为:', currentPlayer.role);
+                        document.getElementById('roleInfo').textContent = `身份：${currentPlayer.role || '未知身份'}`;
+                    }
+                }
+            } else if (data.type === 'updateHand') {
                 // 更新手牌
             } else if (data.type === 'updateStatus') {
                 // 更新状态
