@@ -133,7 +133,7 @@
         
         <div class="hand-cards">
             <h3>手牌</h3>
-            <div id="cardList">
+            <div class="card-grid" id="cardList">
                 <!-- 手牌将通过WebSocket动态添加 -->
             </div>
         </div>
@@ -141,6 +141,7 @@
         <button class="action-btn">出牌</button>
         <button class="action-btn">发言</button>
         <button class="action-btn">投票</button>
+        <button class="action-btn" id="remainingCardsBtn" disabled>牌堆剩余0张牌</button>
     </div>
     
     <script>
@@ -186,6 +187,12 @@
                     // 更新身份信息
                     console.log('更新身份信息为:', currentPlayer.role);
                     document.getElementById('roleInfo').textContent = `身份：${currentPlayer.role || '未知身份'}`;
+                    
+                    // 更新手牌
+                    if (currentPlayer.handCards) {
+                        console.log('更新手牌信息为:', currentPlayer.handCards);
+                        updateHandCards(currentPlayer.handCards);
+                    }
                 } else {
                     console.error('未找到当前玩家的信息');
                 }
@@ -194,6 +201,12 @@
                 if (data.environmentCards) {
                     console.log('环境牌信息:', data.environmentCards);
                     updateEnvironmentCards(data.environmentCards);
+                }
+                
+                // 更新剩余牌数
+                if (data.remainingCards !== undefined) {
+                    console.log('更新剩余牌数为:', data.remainingCards);
+                    updateRemainingCards(data.remainingCards);
                 }
             } else if (data.type === 'roomStatus') {
                 console.log('收到roomStatus消息，玩家数量:', data.players ? data.players.length : 0);
@@ -205,12 +218,24 @@
                         // 更新身份信息
                         console.log('更新身份信息为:', currentPlayer.role);
                         document.getElementById('roleInfo').textContent = `身份：${currentPlayer.role || '未知身份'}`;
+                        
+                        // 更新手牌
+                        if (currentPlayer.handCards) {
+                            console.log('更新手牌信息为:', currentPlayer.handCards);
+                            updateHandCards(currentPlayer.handCards);
+                        }
                     }
                 }
                 // 更新环境牌
                 if (data.environmentCards) {
                     console.log('环境牌信息:', data.environmentCards);
                     updateEnvironmentCards(data.environmentCards);
+                }
+                
+                // 更新剩余牌数
+                if (data.remainingCards !== undefined) {
+                    console.log('更新剩余牌数为:', data.remainingCards);
+                    updateRemainingCards(data.remainingCards);
                 }
             } else if (data.type === 'updateHand') {
                 // 更新手牌
@@ -240,6 +265,36 @@
             });
             
             console.log('环境牌列表更新完成');
+        }
+        
+        // 更新手牌列表
+        function updateHandCards(cards) {
+            const cardList = document.getElementById('cardList');
+            cardList.innerHTML = '';
+            
+            console.log('更新手牌列表，卡牌数量:', cards.length);
+            console.log('手牌:', cards);
+            
+            if (cards.length === 0) {
+                cardList.innerHTML = '<div class="card-item">暂无手牌</div>';
+                return;
+            }
+            
+            cards.forEach((card, index) => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                cardItem.textContent = card;
+                cardList.appendChild(cardItem);
+            });
+            
+            console.log('手牌列表更新完成');
+        }
+        
+        // 更新剩余牌数
+        function updateRemainingCards(remaining) {
+            const remainingCardsBtn = document.getElementById('remainingCardsBtn');
+            remainingCardsBtn.textContent = `牌堆剩余${remaining}张牌`;
+            console.log('剩余牌数更新完成:', remaining);
         }
         
         ws.onclose = function() {

@@ -90,6 +90,19 @@ try {
   console.error('读取身份文件错误:', error);
 }
 
+// 读取卡牌数据
+let allCards = [];
+try {
+  const cardsContent = fs.readFileSync(path.join(__dirname, 'cards.txt'), 'utf8');
+  // 移除首尾的方括号和多余的换行符
+  const cleanedContent = cardsContent.replace(/^\[/, '').replace(/\]$/, '').replace(/\n/g, '');
+  // 分割卡牌并去除空格
+  allCards = cleanedContent.split(',').map(card => card.trim()).filter(card => card);
+  console.log(`成功加载 ${allCards.length} 张卡牌`);
+} catch (error) {
+  console.error('读取卡牌文件错误:', error);
+}
+
 // 随机打乱数组
 function shuffleArray(array) {
   const shuffled = [...array];
@@ -109,7 +122,9 @@ const room = {
   confirmedPlayers: 0,
   players: [],
   availableCharacters: [...allCharacters],
-  environmentCards: []
+  environmentCards: [],
+  cards: [],
+  remainingCards: 0
 };
 
 // WebSocket连接处理
@@ -249,7 +264,8 @@ wss.on('connection', (ws) => {
             type: 'roomStatus',
             room: room,
             players: room.players,
-            environmentCards: room.environmentCards
+            environmentCards: room.environmentCards,
+            remainingCards: room.remainingCards
           }));
           break;
           
@@ -346,12 +362,40 @@ wss.on('connection', (ws) => {
           // 存储环境牌到房间状态中
           room.environmentCards = environmentCards;
           
+          // 发牌逻辑
+          console.log('开始发牌');
+          
+          // 打乱卡牌数组
+          const shuffledCards = shuffleArray(allCards);
+          console.log('打乱后的卡牌数量:', shuffledCards.length);
+          
+          // 按照玩家编号从小到大排序
+          const sortedPlayers = [...room.players].sort((a, b) => a.order - b.order);
+          console.log('排序后的玩家:', sortedPlayers.map(p => p.order));
+          
+          // 为每位玩家分配4张牌
+          sortedPlayers.forEach(player => {
+            // 从卡牌数组头部抽取4张牌
+            const handCards = shuffledCards.splice(0, 4);
+            player.handCards = handCards;
+            console.log('为玩家', player.order, '分配手牌:', handCards);
+          });
+          
+          // 计算剩余牌数
+          const remainingCards = shuffledCards.length;
+          console.log('剩余牌数:', remainingCards);
+          
+          // 更新房间状态
+          room.cards = shuffledCards;
+          room.remainingCards = remainingCards;
+          
           // 广播开始发牌消息给所有玩家
           console.log('广播 gameStarted 消息给所有玩家');
           broadcast({
             type: 'gameStarted',
             players: room.players,
-            environmentCards: environmentCards
+            environmentCards: environmentCards,
+            remainingCards: remainingCards
           });
           
           // 广播开始发牌消息给上帝，让他跳转到 god-panel.html
